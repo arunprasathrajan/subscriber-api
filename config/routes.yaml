@@ -18,3 +18,8 @@ subscriber_lists:
     path: /subscriber/lists
     methods: ['PUT']
     controller: App\Controller\SubscriberController::updateSubscriberToLists
+
+subscriber_enquiry:
+    path: /subscriber/enquiry
+    methods: ['POST']
+    controller: App\Controller\SubscriberController::createSubscriberEnquiry

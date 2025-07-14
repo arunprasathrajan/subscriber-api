@@ -196,6 +196,69 @@ class SubscriberController extends AbstractController
         }
     }
 
+        
+    /**
+     * Add a subscriber enquiry
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function createSubscriberEnquiry(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            try {
+                $emailAddress = $request->get('emailAddress');
+
+                if (!$this->validator->isValidEmail($emailAddress)) {
+                    throw new InvalidArgumentException();
+                }
+
+                $enquiry = $request->get('enquiry');
+
+                if (!$this->validator->isValidEnquiry($enquiry)) {
+                    throw new InvalidArgumentException();
+                }
+
+                $subscriber = $this->getSubscriber($emailAddress);
+
+                if (empty($subscriber)) {
+                    return new JsonResponse([
+                        'status' => 'Action Failed',
+                        'message' => 'Subscriber Not found'
+                    ]);
+                }
+
+                $parameters = [
+                    'message' => $enquiry
+                ];
+
+                $addSubscriberEnquiry = $this->propellerApiClient->accessEndpoint(
+                    'POST', 
+                    'api/subscriber/' . $subscriber['id'] . '/enquiry', 
+                    $parameters
+                );
+
+                if (empty($addSubscriberEnquiry)) {
+                    return new JsonResponse([
+                        'status' => 'Action Failed',
+                        'message' => 'Could not submit the enquiry'
+                    ]);
+                }
+
+                return new JsonResponse([
+                    'status' => 'success',
+                    'message' => 'Enquiry for Subscriber created Successfully'
+                ]);
+            }catch (InvalidArgumentException $e) {
+                error_log($e->getMessage());
+                $errors = $this->validator->getErrors();
+
+                return new JsonResponse($errors);
+            }
+        }
+    }
+
     /**
      * Get a subscriber from the Propeller Endpoint
      *

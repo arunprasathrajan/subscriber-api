@@ -59,7 +59,7 @@ class SubscriberValidator extends AbstractValidator
 
         return empty($this->errors);
     }
-    
+
     /**
      * @param array $submittedLists
      * @param array $endpointLists
@@ -82,5 +82,21 @@ class SubscriberValidator extends AbstractValidator
                 }
             }
         }
+    }
+
+    /**
+     * @param ?string $enquiry
+     * 
+     * @return bool
+     */
+    public function isValidEnquiry(?string $enquiry): bool
+    {
+        $this->validateRequiredValue('enquiry', $enquiry);
+
+        if (strlen($enquiry) > 1000) {
+            $this->errors['enquiry'] = 'Limit exceeded. The max characters allowed is 1000.'; 
+        }
+
+        return empty($this->errors);
     }
 }
