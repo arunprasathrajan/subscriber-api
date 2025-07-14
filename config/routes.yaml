@@ -8,3 +8,8 @@ home:
     path: /
     methods: ['GET']
     controller: App\Controller\SubscriberController
+
+create_subscriber:
+    path: /subscriber/new
+    methods: ['POST']
+    controller: App\Controller\SubscriberController::createSubscriber

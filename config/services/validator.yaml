@@ -1,0 +1,4 @@
+services:
+    App\Validator\SubscriberValidator:
+        autowire: true
+        autoconfigure: true
