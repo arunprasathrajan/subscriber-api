@@ -46,4 +46,41 @@ class SubscriberValidator extends AbstractValidator
 
         return empty($this->errors);
     }
+
+    /**
+     * @param ?string $emailAddress
+     * 
+     * @return bool
+     */
+    public function isValidEmail(?string $emailAddress): bool
+    {
+        $this->validateRequiredValue('emailAddress', $emailAddress);
+        $this->isEmailValid('emailAddress', $emailAddress);
+
+        return empty($this->errors);
+    }
+    
+    /**
+     * @param array $submittedLists
+     * @param array $endpointLists
+     * 
+     * @return bool
+     */
+    public function validateLists(array $submittedLists = [], $endpointLists = []): void
+    {
+        if(empty($submittedLists)) {
+            $this->errors[$fieldName] = 'The lists value is empty.';
+        }
+
+        if(!empty($endpointLists)) {
+            $endpointLists = array_column($endpointLists, 'name');
+
+            foreach ($submittedLists as $submittedList) {
+                if(!in_array($submittedList, $endpointLists)) {
+                    $this->errors['lists'] = 'The submitted list ' . $submittedList . ' does not exist. Please submit as comma seperated strings from the following: ' . implode(', ', $endpointLists);
+                    continue;
+                }
+            }
+        }
+    }
 }

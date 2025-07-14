@@ -13,3 +13,8 @@ create_subscriber:
     path: /subscriber/new
     methods: ['POST']
     controller: App\Controller\SubscriberController::createSubscriber
+
+subscriber_lists:
+    path: /subscriber/lists
+    methods: ['PUT']
+    controller: App\Controller\SubscriberController::updateSubscriberToLists
