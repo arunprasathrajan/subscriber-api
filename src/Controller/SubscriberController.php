@@ -119,6 +119,129 @@ class SubscriberController extends AbstractController
     }
 
     /**
+     * Update Marketting list to a subscriber
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function updateSubscriberToLists(Request $request)
+    {
+        if ($request->isMethod('put')) {
+            try {
+                $emailAddress = $request->get('emailAddress');
+
+                if (!$this->validator->isValidEmail($emailAddress)) {
+                    throw new InvalidArgumentException();
+                }
+
+                $endpointLists = $this->getSubscriberLists();
+                $submittedlists = array_map('trim', explode(',', $request->get('lists')));
+
+                if (!$this->validator->validateLists($submittedlists, $endpointLists)) {
+                    throw new InvalidArgumentException();
+                }
+
+                $subscriber = $this->getSubscriber($emailAddress);
+
+                if (empty($subscriber)) {
+                    return new JsonResponse([
+                        'status' => 'failure',
+                        'message' => 'Subscriber Not found'
+                    ]);
+                }
+
+                if (!$subscriber['marketingConsent']) {
+                    return new JsonResponse([
+                        'status' => 'failure',
+                        'message' => 'Subscriber not provided consent to be added to the list'
+                    ]);
+                }
+
+                $listIds = [];
+                foreach ($submittedLists as $submittedList) {
+                    $key = array_search($submittedList, array_column($endpointLists, 'name'));
+
+                    if ($key === false) {
+                        continue;
+                    }
+
+                    $listIds[] = $endpointLists[$key]['id'];
+                }
+
+                $parameters = [
+                    'emailAddress' => $emailAddress,
+                    'lists' => $listIds
+                ];
+
+                $updateSubscriber = $this->propellerApiClient->accessEndpoint('PUT', 'api/subscriber', $parameters);
+
+                if (empty($updateSubscriber)) {
+                    return new JsonResponse([
+                        'status' => 'Action Failed',
+                        'message' => 'Could not update the subscriber'
+                    ]);
+                }
+
+                return new JsonResponse([
+                    'status' => 'success',
+                    'message' => 'Subscriber Lists updated Successfully'
+                ]);
+            } catch (InvalidArgumentException $e) {
+                error_log($e->getMessage());
+                $errors = $this->validator->getErrors();
+
+                return new JsonResponse($errors);
+            }
+        }
+    }
+
+    /**
+     * Get a subscriber from the Propeller Endpoint
+     *
+     * @return array
+     */
+    public function getSubscriber(string $email): array
+    {
+        $subscriberData = $this->getSubscriberData();
+        $index = array_search($email, array_column($subscriberData, 'email'));
+
+        if ($index === false) {
+            return [];
+        }
+
+        $propellerResponse = $this->propellerApiClient->accessEndpoint('GET', 'api/subscriber/' . $subscriberData[$index]['id']);
+
+        if (empty($propellerResponse)) {
+            return [];
+        }
+
+        if (isset($propellerResponse['subscriber'])) {
+            return $propellerResponse['subscriber'];
+        }
+    }
+
+    /**
+     * Get the list of subscribers from the Propeller Endpoint
+     *
+     * @return array
+     */
+    public function getSubscriberLists(): array
+    {
+        $propellerResponse = $this->propellerApiClient->accessEndpoint('GET', 'api/lists');
+
+        if(empty($propellerResponse)) {
+            return [];
+        }
+
+        if (isset($propellerResponse['lists'])) {
+            return $propellerResponse['lists']; 
+        }
+
+        return [];
+    }
+
+    /**
      * Get the subscriber data file in the project repo
      *
      * @return string|null
