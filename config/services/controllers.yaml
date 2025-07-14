@@ -1,0 +1,5 @@
+services:
+    App\Controller\SubscriberController:
+        public: true
+        autoconfigure: true
+        autowire: true
