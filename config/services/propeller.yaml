@@ -1,0 +1,4 @@
+services:
+    App\Service\PropellerApiClient:
+        autowire: true
+        autoconfigure: true
