@@ -53,6 +53,17 @@ abstract class AbstractValidator
      * @param string $fieldName
      * @param ?string $value
      */
+    public function validateValueLength(string $fieldName, ?string $value): void
+    {
+        if (strlen($value) <= 255) {
+            $this->errors[$fieldName] = 'The character limit is 255.';
+        }
+    }
+
+    /**
+     * @param string $fieldName
+     * @param ?string $value
+     */
     public function isEmailValid(string $fieldName, ?string $value): void
     {
         if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {

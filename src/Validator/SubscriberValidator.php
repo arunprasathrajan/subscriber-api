@@ -19,27 +19,42 @@ class SubscriberValidator extends AbstractValidator
         }
 
         $this->validateRequiredValue('emailAddress', $request->get('emailAddress'));
-        $this->isEmailValid('emailAddress', $request->get('emailAddress'));
+        
+        if (empty($this->errors['emailAddress'])) {
+            $this->isEmailValid('emailAddress', $request->get('emailAddress'));
+        }
 
         $this->validateRequiredValue('dateOfBirth', $request->get('dateOfBirth'));
-        $this->isDateValid('dateOfBirth', $request->get('dateOfBirth'));
+
+        if (empty($this->errors['dateOfBirth'])) {
+            $this->isDateValid('dateOfBirth', $request->get('dateOfBirth'));
+        }
 
         $this->validateRequiredValue('marketingConsent', $request->get('marketingConsent'));
-        $this->isValidConsent('marketingConsent', $request->get('marketingConsent'));
+        
+        if (empty($this->errors['marketingConsent'])) {
+            $this->isValidConsent('marketingConsent', $request->get('marketingConsent'));
+        }
+
+        if(!empty($request->get('firstName'))) {
+            $this->validateValueLength('firstName', $request->get('firstName'));
+        }
+
+        if(!empty($request->get('lastName'))) {
+            $this->validateValueLength('lastName', $request->get('lastName'));
+        }
 
         return empty($this->errors);
     }
 
     /**
      * @param string $emailAddress
-     * @param array $data
+     * @param array $emails
      * 
      * @return bool
      */
-    public function isEmailDuplicate(string $emailAddress, $data = []): bool
+    public function isEmailDuplicate(string $emailAddress, $emails = []): bool
     {
-        $emails = array_column($data, 'email');
-
         if (in_array($emailAddress, $emails)) {
             $this->errors['emailAddress'] = 'The email already exists.'; 
         }
@@ -48,14 +63,19 @@ class SubscriberValidator extends AbstractValidator
     }
 
     /**
-     * @param ?string $emailAddress
+     * @param Request $request
      * 
      * @return bool
      */
-    public function isValidEmail(?string $emailAddress): bool
+    public function isValidEnquiry(Request $request = null): bool
     {
-        $this->validateRequiredValue('emailAddress', $emailAddress);
-        $this->isEmailValid('emailAddress', $emailAddress);
+        $this->emailValidation($request->get('emailAddress'));
+
+        $this->validateRequiredValue('enquiry', $request->get('enquiry'));
+
+        if (empty($this->errors['enquiry']) && strlen($request->get('enquiry')) > 1000) {
+            $this->errors['enquiry'] = 'Limit exceeded. The max characters allowed is 1000.'; 
+        }
 
         return empty($this->errors);
     }
@@ -66,10 +86,10 @@ class SubscriberValidator extends AbstractValidator
      * 
      * @return bool
      */
-    public function validateLists(array $submittedLists = [], $endpointLists = []): void
+    public function validateLists(array $submittedLists = [], $endpointLists = []): bool
     {
         if(empty($submittedLists)) {
-            $this->errors[$fieldName] = 'The lists value is empty.';
+            $this->errors['lists'] = 'The lists value is empty.';
         }
 
         if(!empty($endpointLists)) {
@@ -82,19 +102,21 @@ class SubscriberValidator extends AbstractValidator
                 }
             }
         }
+
+        return empty($this->errors);
     }
 
     /**
-     * @param ?string $enquiry
+     * @param ?string $emailAddress
      * 
      * @return bool
      */
-    public function isValidEnquiry(?string $enquiry): bool
+    public function emailValidation(?string $emailAddress): bool
     {
-        $this->validateRequiredValue('enquiry', $enquiry);
+        $this->validateRequiredValue('emailAddress', $emailAddress);
 
-        if (strlen($enquiry) > 1000) {
-            $this->errors['enquiry'] = 'Limit exceeded. The max characters allowed is 1000.'; 
+        if (empty($this->errors['emailAddress'])) {
+            $this->isEmailValid('emailAddress', $emailAddress);
         }
 
         return empty($this->errors);
