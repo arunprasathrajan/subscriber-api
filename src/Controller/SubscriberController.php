@@ -67,13 +67,13 @@ class SubscriberController extends AbstractController
                     throw new InvalidArgumentException();
                 }
 
-                $subscriberData = $this->getSubscriberData();
+                $propellerSubscribers = $this->getAllSubscribers();
 
                 //Check to see if the subscriber with the emailAddress already exists
                 if (!$this->validator->isEmailDuplicate(
                     $request->get('emailAddress'), 
-                    $subscriberData)
-                ) {
+                    array_column($propellerSubscribers, 'emailAddress')
+                )) {
                     throw new InvalidArgumentException();
                 }
                 
@@ -97,13 +97,6 @@ class SubscriberController extends AbstractController
                         'message' => 'Could not create the subscriber'
                     ]);
                 }
-
-                $subscriberData[] = [
-                    'id' => $createSubscriber['subscriber']['id'],
-                    'email'=> $createSubscriber['subscriber']['emailAddress']
-                ];
-
-                file_put_contents($this->getSubscriberFile(), json_encode($subscriberData, JSON_PRETTY_PRINT));
 
                 return new JsonResponse([
                     'status' => 'success',
@@ -131,14 +124,14 @@ class SubscriberController extends AbstractController
             try {
                 $emailAddress = $request->get('emailAddress');
 
-                if (!$this->validator->isValidEmail($emailAddress)) {
+                if (!$this->validator->emailValidation($emailAddress)) {
                     throw new InvalidArgumentException();
                 }
 
                 $endpointLists = $this->getSubscriberLists();
-                $submittedlists = array_map('trim', explode(',', $request->get('lists')));
+                $submittedLists = array_map('trim', explode(',', $request->get('lists')));
 
-                if (!$this->validator->validateLists($submittedlists, $endpointLists)) {
+                if (!$this->validator->validateLists($submittedLists, $endpointLists)) {
                     throw new InvalidArgumentException();
                 }
 
@@ -174,9 +167,9 @@ class SubscriberController extends AbstractController
                     'lists' => $listIds
                 ];
 
-                $updateSubscriber = $this->propellerApiClient->accessEndpoint('PUT', 'api/subscriber', $parameters);
+                $updateSubscriberLists = $this->propellerApiClient->accessEndpoint('PUT', 'api/subscriber', $parameters);
 
-                if (empty($updateSubscriber)) {
+                if (empty($updateSubscriberLists)) {
                     return new JsonResponse([
                         'status' => 'Action Failed',
                         'message' => 'Could not update the subscriber'
@@ -208,19 +201,12 @@ class SubscriberController extends AbstractController
     {
         if ($request->isMethod('post')) {
             try {
-                $emailAddress = $request->get('emailAddress');
 
-                if (!$this->validator->isValidEmail($emailAddress)) {
+                if (!$this->validator->isValidEnquiry($request)) {
                     throw new InvalidArgumentException();
                 }
 
-                $enquiry = $request->get('enquiry');
-
-                if (!$this->validator->isValidEnquiry($enquiry)) {
-                    throw new InvalidArgumentException();
-                }
-
-                $subscriber = $this->getSubscriber($emailAddress);
+                $subscriber = $this->getSubscriber($request->get('emailAddress'));
 
                 if (empty($subscriber)) {
                     return new JsonResponse([
@@ -230,7 +216,7 @@ class SubscriberController extends AbstractController
                 }
 
                 $parameters = [
-                    'message' => $enquiry
+                    'message' => $request->get('enquiry')
                 ];
 
                 $addSubscriberEnquiry = $this->propellerApiClient->accessEndpoint(
@@ -266,22 +252,19 @@ class SubscriberController extends AbstractController
      */
     public function getSubscriber(string $email): array
     {
-        $subscriberData = $this->getSubscriberData();
-        $index = array_search($email, array_column($subscriberData, 'email'));
+        $propellerSubscribers = $this->getAllSubscribers();
+
+        if (empty($propellerSubscribers)) {
+            return [];
+        }
+
+        $index = array_search($email, array_column($propellerSubscribers, 'emailAddress'));
 
         if ($index === false) {
             return [];
         }
 
-        $propellerResponse = $this->propellerApiClient->accessEndpoint('GET', 'api/subscriber/' . $subscriberData[$index]['id']);
-
-        if (empty($propellerResponse)) {
-            return [];
-        }
-
-        if (isset($propellerResponse['subscriber'])) {
-            return $propellerResponse['subscriber'];
-        }
+        return $propellerSubscribers[$index];
     }
 
     /**
@@ -291,53 +274,35 @@ class SubscriberController extends AbstractController
      */
     public function getSubscriberLists(): array
     {
-        $propellerResponse = $this->propellerApiClient->accessEndpoint('GET', 'api/lists');
+        $propellerSubscriberLists = $this->propellerApiClient->accessEndpoint('GET', 'api/lists');
 
-        if(empty($propellerResponse)) {
+        if(empty($propellerSubscriberLists)) {
             return [];
         }
 
-        if (isset($propellerResponse['lists'])) {
-            return $propellerResponse['lists']; 
+        if (isset($propellerSubscriberLists['lists'])) {
+            return $propellerSubscriberLists['lists']; 
         }
 
         return [];
     }
 
     /**
-     * Get the subscriber data file in the project repo
-     *
-     * @return string|null
-     */
-    public function getSubscriberFile(): ?string
-    {
-        $file = $this->getParameter('kernel.project_dir') . '/var/subscriberData/subscriber.json';
-
-        if (file_exists($file)) {
-            return $file;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Get the subscriber data saved internally
+     * Get all Subscribers
      *
      * @return array
      */
-    public function getSubscriberData(): array
+    public function getAllSubscribers(): array
     {
-        $file = $this->getSubscriberFile();
+        $propellerSubscribers = $this->propellerApiClient->accessEndpoint('GET', 'api/subscribers');
 
-        if (empty($file)) {
+        if(empty($propellerSubscribers)) {
             return [];
         }
 
-        $data = json_decode(file_get_contents($file), true);
-
-        if(isset($data)) {
-            return $data;
-        } 
+        if (isset($propellerSubscribers['subscribers'])) {
+            return $propellerSubscribers['subscribers'];
+        }
 
         return [];
     }

@@ -21,10 +21,6 @@
 | marketingConsent  | string  | Required value, Must be either "yes" or "no"               |
 | dateOfBirth       | date    | Must be of format y-m-d and must be of age 18and above     |
 ```
-## KeyNotes
-
-This appltion uses a JSON file for data storage instead of a database table. When a new subscriber is created, the ```id``` and ```email``` is stored in the json file inorder to remove duplication of subscriber.
-
 
 ### Update a subscriber to Marketting Lists ``` /subscriber/lists```
 ```
