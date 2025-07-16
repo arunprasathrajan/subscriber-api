@@ -18,12 +18,7 @@ class SubscriberValidator extends AbstractValidator
             throw new InvalidArgumentException('No request passed for validation');
         }
 
-        $this->validateRequiredValue('emailAddress', $request->get('emailAddress'));
-        
-        if (empty($this->errors['emailAddress'])) {
-            $this->isEmailValid('emailAddress', $request->get('emailAddress'));
-        }
-
+        $this->emailValidation($request->get('emailAddress'));
         $this->validateRequiredValue('dateOfBirth', $request->get('dateOfBirth'));
 
         if (empty($this->errors['dateOfBirth'])) {
@@ -86,7 +81,7 @@ class SubscriberValidator extends AbstractValidator
      * 
      * @return bool
      */
-    public function validateLists(array $submittedLists = [], $endpointLists = []): bool
+    public function validateLists(array $submittedLists = [], array $endpointLists = []): bool
     {
         if(empty($submittedLists)) {
             $this->errors['lists'] = 'The lists value is empty.';
@@ -98,7 +93,7 @@ class SubscriberValidator extends AbstractValidator
             foreach ($submittedLists as $submittedList) {
                 if(!in_array($submittedList, $endpointLists)) {
                     $this->errors['lists'] = 'The submitted list ' . $submittedList . ' does not exist. Please submit as comma seperated strings from the following: ' . implode(', ', $endpointLists);
-                    continue;
+                    break;
                 }
             }
         }
