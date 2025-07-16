@@ -118,7 +118,7 @@ class SubscriberController extends AbstractController
      *
      * @return JsonResponse
      */
-    public function updateSubscriberToLists(Request $request)
+    public function updateSubscriberToLists(Request $request): JsonResponse
     {
         if ($request->isMethod('put')) {
             try {
@@ -129,6 +129,14 @@ class SubscriberController extends AbstractController
                 }
 
                 $endpointLists = $this->getSubscriberLists();
+
+                if (empty($endpointLists)) {
+                    return new JsonResponse([
+                        'status' => 'failure',
+                        'message' => 'No Marketting Lists found from Endpoint'
+                    ]);
+                }
+
                 $submittedLists = array_map('trim', explode(',', $request->get('lists')));
 
                 if (!$this->validator->validateLists($submittedLists, $endpointLists)) {
@@ -152,22 +160,18 @@ class SubscriberController extends AbstractController
                 }
 
                 $listIds = [];
-                foreach ($submittedLists as $submittedList) {
-                    $key = array_search($submittedList, array_column($endpointLists, 'name'));
+                $endpointLists = array_column($endpointLists, 'name', 'id');
+                $listIds = array_keys(array_intersect($endpointLists, $submittedLists));
+                $updateSubscriberLists = [];
 
-                    if ($key === false) {
-                        continue;
-                    }
+                if (!empty($listIds)) {
+                    $parameters = [
+                        'emailAddress' => $emailAddress,
+                        'lists' => $listIds
+                    ];
 
-                    $listIds[] = $endpointLists[$key]['id'];
+                    $updateSubscriberLists = $this->propellerApiClient->accessEndpoint('PUT', 'api/subscriber', $parameters);
                 }
-
-                $parameters = [
-                    'emailAddress' => $emailAddress,
-                    'lists' => $listIds
-                ];
-
-                $updateSubscriberLists = $this->propellerApiClient->accessEndpoint('PUT', 'api/subscriber', $parameters);
 
                 if (empty($updateSubscriberLists)) {
                     return new JsonResponse([
@@ -258,13 +262,18 @@ class SubscriberController extends AbstractController
             return [];
         }
 
-        $index = array_search($email, array_column($propellerSubscribers, 'emailAddress'));
+        $subscriber = current(
+            array_filter($propellerSubscribers, function($propellerSubscriber) use ($email) {
+                return isset($propellerSubscriber['emailAddress']) && 
+                    $propellerSubscriber['emailAddress'] === $email;
+            })
+        );
 
-        if ($index === false) {
+        if (empty($subscriber)) {
             return [];
         }
 
-        return $propellerSubscribers[$index];
+        return $subscriber;
     }
 
     /**
