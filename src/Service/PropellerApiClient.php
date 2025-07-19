@@ -33,8 +33,7 @@ class PropellerApiClient
     public function __construct(
         HttpClientInterface $client,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->client = $client;
         $this->logger = $logger;
     }
@@ -58,8 +57,8 @@ class PropellerApiClient
 
         try {
             $response = $this->client->request(
-                $action, 
-                self::ENDPOINT_URL . '/' . $apiName, 
+                $action,
+                self::ENDPOINT_URL . '/' . $apiName,
                 $body
             );
 

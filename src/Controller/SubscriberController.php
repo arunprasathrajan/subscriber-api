@@ -61,6 +61,10 @@ class SubscriberController extends AbstractController
      */
     public function createSubscriber(Request $request): JsonResponse
     {
+        if ($request->getMethod() !== 'POST') {
+            return new JsonResponse(['error' => 'Method Not Allowed'], 405);
+        }
+
         if ($request->isMethod('post')) {
             try {
                 if (!$this->validator->isValid($request)) {
@@ -71,13 +75,13 @@ class SubscriberController extends AbstractController
 
                 //Check to see if the subscriber with the emailAddress already exists
                 if (!$this->validator->isEmailDuplicate(
-                    $request->get('emailAddress'), 
+                    $request->get('emailAddress'),
                     array_column($propellerSubscribers, 'emailAddress')
                 )) {
                     throw new InvalidArgumentException();
                 }
-                
-                $parameters = [
+
+                $endpointParameters = [
                     'emailAddress' => $request->get('emailAddress'),
                     'firstName' => $request->get('firstName'),
                     'lastName' => $request->get('lastName'),
@@ -86,9 +90,9 @@ class SubscriberController extends AbstractController
                 ];
 
                 $createSubscriber = $this->propellerApiClient->accessEndpoint(
-                    'POST', 
-                    'api/subscriber/', 
-                    $parameters
+                    'POST',
+                    'api/subscriber/',
+                    $endpointParameters
                 );
 
                 if (empty($createSubscriber)) {
@@ -120,12 +124,16 @@ class SubscriberController extends AbstractController
      */
     public function updateSubscriberToLists(Request $request): JsonResponse
     {
-        if ($request->isMethod('put')) {
+        if ($request->getMethod() !== 'PUT') {
+            return new JsonResponse(['error' => 'Method Not Allowed'], 405);
+        }
+
+        if ($request->isMethod('PUT')) {
             try {
                 $emailAddress = $request->get('emailAddress');
 
                 if (!$this->validator->emailValidation($emailAddress)) {
-                    throw new InvalidArgumentException();
+                    throw new InvalidArgumentException('The value is not a valid email.');
                 }
 
                 $endpointLists = $this->getSubscriberLists();
@@ -155,7 +163,7 @@ class SubscriberController extends AbstractController
                 if (!$subscriber['marketingConsent']) {
                     return new JsonResponse([
                         'status' => 'failure',
-                        'message' => 'Subscriber not provided consent to be added to the list'
+                        'message' => 'Subscriber has not provided consent to be added to the list'
                     ]);
                 }
 
@@ -165,12 +173,12 @@ class SubscriberController extends AbstractController
                 $updateSubscriberLists = [];
 
                 if (!empty($listIds)) {
-                    $parameters = [
+                    $endpointParameters = [
                         'emailAddress' => $emailAddress,
                         'lists' => $listIds
                     ];
 
-                    $updateSubscriberLists = $this->propellerApiClient->accessEndpoint('PUT', 'api/subscriber', $parameters);
+                    $updateSubscriberLists = $this->propellerApiClient->accessEndpoint('PUT', 'api/subscriber', $endpointParameters);
                 }
 
                 if (empty($updateSubscriberLists)) {
@@ -193,7 +201,6 @@ class SubscriberController extends AbstractController
         }
     }
 
-        
     /**
      * Add a subscriber enquiry
      *
@@ -203,6 +210,10 @@ class SubscriberController extends AbstractController
      */
     public function createSubscriberEnquiry(Request $request)
     {
+        if ($request->getMethod() !== 'POST') {
+            return new JsonResponse(['error' => 'Method Not Allowed'], 405);
+        }
+
         if ($request->isMethod('post')) {
             try {
 
@@ -219,14 +230,14 @@ class SubscriberController extends AbstractController
                     ]);
                 }
 
-                $parameters = [
+                $endpointParameters = [
                     'message' => $request->get('enquiry')
                 ];
 
                 $addSubscriberEnquiry = $this->propellerApiClient->accessEndpoint(
-                    'POST', 
-                    'api/subscriber/' . $subscriber['id'] . '/enquiry', 
-                    $parameters
+                    'POST',
+                    'api/subscriber/' . $subscriber['id'] . '/enquiry',
+                    $endpointParameters
                 );
 
                 if (empty($addSubscriberEnquiry)) {
@@ -240,7 +251,7 @@ class SubscriberController extends AbstractController
                     'status' => 'success',
                     'message' => 'Enquiry for Subscriber created Successfully'
                 ]);
-            }catch (InvalidArgumentException $e) {
+            } catch (InvalidArgumentException $e) {
                 error_log($e->getMessage());
                 $errors = $this->validator->getErrors();
 
@@ -263,8 +274,8 @@ class SubscriberController extends AbstractController
         }
 
         $subscriber = current(
-            array_filter($propellerSubscribers, function($propellerSubscriber) use ($email) {
-                return isset($propellerSubscriber['emailAddress']) && 
+            array_filter($propellerSubscribers, function ($propellerSubscriber) use ($email) {
+                return isset($propellerSubscriber['emailAddress']) &&
                     $propellerSubscriber['emailAddress'] === $email;
             })
         );
@@ -277,7 +288,7 @@ class SubscriberController extends AbstractController
     }
 
     /**
-     * Get the list of subscribers from the Propeller Endpoint
+     * Get the subscriber lists from the Propeller Endpoint
      *
      * @return array
      */
@@ -285,12 +296,12 @@ class SubscriberController extends AbstractController
     {
         $propellerSubscriberLists = $this->propellerApiClient->accessEndpoint('GET', 'api/lists');
 
-        if(empty($propellerSubscriberLists)) {
+        if (empty($propellerSubscriberLists)) {
             return [];
         }
 
         if (isset($propellerSubscriberLists['lists'])) {
-            return $propellerSubscriberLists['lists']; 
+            return $propellerSubscriberLists['lists'];
         }
 
         return [];
@@ -305,7 +316,7 @@ class SubscriberController extends AbstractController
     {
         $propellerSubscribers = $this->propellerApiClient->accessEndpoint('GET', 'api/subscribers');
 
-        if(empty($propellerSubscribers)) {
+        if (empty($propellerSubscribers)) {
             return [];
         }
 
@@ -316,4 +327,3 @@ class SubscriberController extends AbstractController
         return [];
     }
 }
-

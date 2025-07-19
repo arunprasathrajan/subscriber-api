@@ -9,7 +9,7 @@ class SubscriberValidator extends AbstractValidator
 {
     /**
      * @param Request $request
-     * 
+     *
      * @return bool
      */
     public function isValid(Request $request = null): bool
@@ -25,15 +25,15 @@ class SubscriberValidator extends AbstractValidator
             $this->isDateValid('dateOfBirth', $request->get('dateOfBirth'));
         }
 
-        if(!empty($request->get('marketingConsent'))) {
+        if (!empty($request->get('marketingConsent'))) {
             $this->isValidConsent('marketingConsent', $request->get('marketingConsent'));
         }
 
-        if(!empty($request->get('firstName'))) {
+        if (!empty($request->get('firstName'))) {
             $this->validateValueLength('firstName', $request->get('firstName'));
         }
 
-        if(!empty($request->get('lastName'))) {
+        if (!empty($request->get('lastName'))) {
             $this->validateValueLength('lastName', $request->get('lastName'));
         }
 
@@ -43,13 +43,13 @@ class SubscriberValidator extends AbstractValidator
     /**
      * @param string $emailAddress
      * @param array $emails
-     * 
+     *
      * @return bool
      */
     public function isEmailDuplicate(string $emailAddress, $emails = []): bool
     {
         if (in_array($emailAddress, $emails)) {
-            $this->errors['emailAddress'] = 'The email already exists.'; 
+            $this->errors['emailAddress'] = 'The email already exists.';
         }
 
         return empty($this->errors);
@@ -57,7 +57,7 @@ class SubscriberValidator extends AbstractValidator
 
     /**
      * @param Request $request
-     * 
+     *
      * @return bool
      */
     public function isValidEnquiry(Request $request = null): bool
@@ -67,7 +67,7 @@ class SubscriberValidator extends AbstractValidator
         $this->validateRequiredValue('enquiry', $request->get('enquiry'));
 
         if (empty($this->errors['enquiry']) && strlen($request->get('enquiry')) > 1000) {
-            $this->errors['enquiry'] = 'Limit exceeded. The max characters allowed is 1000.'; 
+            $this->errors['enquiry'] = 'Limit exceeded. The max characters allowed is 1000.';
         }
 
         return empty($this->errors);
@@ -76,20 +76,20 @@ class SubscriberValidator extends AbstractValidator
     /**
      * @param array $submittedLists
      * @param array $endpointLists
-     * 
+     *
      * @return bool
      */
     public function validateLists(array $submittedLists = [], array $endpointLists = []): bool
     {
-        if(empty($submittedLists)) {
+        if (empty($submittedLists)) {
             $this->errors['lists'] = 'The lists value is empty.';
         }
 
-        if(!empty($endpointLists) && empty($this->errors['lists'])) {
+        if (!empty($endpointLists) && empty($this->errors['lists'])) {
             $endpointLists = array_column($endpointLists, 'name');
 
             foreach ($submittedLists as $submittedList) {
-                if(!in_array($submittedList, $endpointLists)) {
+                if (!in_array($submittedList, $endpointLists)) {
                     $this->errors['lists'] = 'The submitted list ' . $submittedList . ' does not exist. Please submit as comma seperated strings from the following: ' . implode(', ', $endpointLists);
                     break;
                 }
@@ -101,7 +101,7 @@ class SubscriberValidator extends AbstractValidator
 
     /**
      * @param ?string $emailAddress
-     * 
+     *
      * @return bool
      */
     public function emailValidation(?string $emailAddress): bool

@@ -13,7 +13,7 @@ abstract class AbstractValidator
      */
     protected $errors;
 
-    public function __construct() 
+    public function __construct()
     {
         $this->errors = [];
     }
@@ -63,7 +63,7 @@ abstract class AbstractValidator
     public function isEmailValid(string $fieldName, ?string $value): void
     {
         if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
-            $this->errors[$fieldName] = 'The value is not a valid email.';   
+            $this->errors[$fieldName] = 'The value is not a valid email.';
         }
     }
 
@@ -78,7 +78,7 @@ abstract class AbstractValidator
         if (empty($date)) {
             $this->errors[$fieldName] = 'The value is not a valid date. Please use the format y-m-d ex:1990-01-15';
         } elseif (time() < strtotime('+18 years', $date->getTimestamp())) {
-            $this->errors[$fieldName] = 'The age is not above 18';   
+            $this->errors[$fieldName] = 'The age is not above 18';
         }
     }
 
