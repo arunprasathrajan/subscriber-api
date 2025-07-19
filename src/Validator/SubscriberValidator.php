@@ -25,9 +25,7 @@ class SubscriberValidator extends AbstractValidator
             $this->isDateValid('dateOfBirth', $request->get('dateOfBirth'));
         }
 
-        $this->validateRequiredValue('marketingConsent', $request->get('marketingConsent'));
-        
-        if (empty($this->errors['marketingConsent'])) {
+        if(!empty($request->get('marketingConsent'))) {
             $this->isValidConsent('marketingConsent', $request->get('marketingConsent'));
         }
 
@@ -87,7 +85,7 @@ class SubscriberValidator extends AbstractValidator
             $this->errors['lists'] = 'The lists value is empty.';
         }
 
-        if(!empty($endpointLists)) {
+        if(!empty($endpointLists) && empty($this->errors['lists'])) {
             $endpointLists = array_column($endpointLists, 'name');
 
             foreach ($submittedLists as $submittedList) {

@@ -3,7 +3,6 @@
 namespace App\Validator;
 
 use DateTime;
-use Symfony\Component\Filesystem\Filesystem;
 
 abstract class AbstractValidator
 {
@@ -14,11 +13,8 @@ abstract class AbstractValidator
      */
     protected $errors;
 
-    private Filesystem $filesystem;
-
-    public function __construct(Filesystem $filesystem) 
+    public function __construct() 
     {
-        $this->filesystem = $filesystem;
         $this->errors = [];
     }
 
